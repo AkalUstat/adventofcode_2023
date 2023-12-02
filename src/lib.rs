@@ -1,5 +1,5 @@
 use std::fs::File;
-use std::io::{BufRead, BufReader};
+use std::io::{BufReader};
 
 
 pub fn file_reader(file_loc: &str) -> BufReader<File> {
