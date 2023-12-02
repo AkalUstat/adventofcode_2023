@@ -3,6 +3,7 @@ use adventofcode_2023::file_reader;
 use std::io::{BufRead};
 use regex::Regex;
 fn main() {
+    println!("{}", part_one());
     println!("{}", part_two());
 }
 
@@ -54,9 +55,9 @@ fn part_two() -> i32 {
 
     let mut power_collector = 0i32;
 
-    'outer: for line in filer.lines().map(|l| l.unwrap()) {
+    for line in filer.lines().map(|l| l.unwrap()) {
         let line_borrow = &line;
-        let mut separate_id = line_borrow.split(":");
+        let separate_id = line_borrow.split(":");
         let value_str = separate_id.last().unwrap();
         let mut max_red_num = 0i32;
         let mut max_green_num = 0i32;
@@ -90,7 +91,7 @@ fn part_two() -> i32 {
                 }
             }
         }
-        power_collector += (max_red_num * max_blue_num * max_green_num);
+        power_collector += max_red_num * max_blue_num * max_green_num;
     }
     power_collector
 }
