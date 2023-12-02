@@ -1,9 +1,10 @@
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 
-use regex::Regex;
+// use regex::Regex;
+use aho_corasick::{AhoCorasick, PatternID};
 
-fn part1() -> i32 {
+/* fn part1() -> i32 {
     let mut calibration_total = 0i32;
     let nums = Regex::new(r"[0-9]{1,1}").unwrap();
 
@@ -27,60 +28,68 @@ fn part1() -> i32 {
     }
     calibration_total
 
-}
+} */
 
 pub fn part2() -> i32 {
     let mut calibration_total = 0i32;
-    let nums = Regex::new(r"\d|on|tw|thre|fou|fiv|si|seve|eigh|nin{1,1}").unwrap();
+    //let nums = Regex::new(r"(?=(\d|one|two|three|four|five|six|seven|eight|nine{1,1}))").unwrap();
 
     let file = File::open("./inputs/day1.txt").unwrap();
     let reader = BufReader::new(file);
 
-    for line in reader.lines() {
-        let line_val = &line.expect("line");
-        let mut matches = nums.find_iter(line_val);
+    let patterns = &["1", "2", "3", "4", "5", "6", "7", "8", "9", "one", "two", "three", "four", "five",
+                        "six", "seven", "eight", "nine"];
+    let ac = AhoCorasick::new(patterns).unwrap();
+
+    let mut lines_iter = reader.lines().map(|l| l.unwrap());
+
+    for line in lines_iter {
+        let line_val = &line;
+        let mut matches = ac.find_iter(line_val);
+        // let mut matches = nums.find_iter(line_val);
+        //println!("{:?} {:?}", matches.next().unwrap().unwrap().as_str(), matches.last().unwrap().unwrap().as_str());
         let first = match matches.next() {
             None => "0",
-            Some(x) => x.as_str(),
+            Some(x) => patterns[x.pattern().as_usize()],
         };
         let last = match matches.last() {
-            None => first,
-            Some(x) => x.as_str(),
+            None => "0",
+            Some(x) => patterns[x.pattern().as_usize()],
         };
-
         let first_digit = match first {
-            "on" => "1",
-            "tw" => "2",
-            "thre" => "3",
-            "fou" => "4",
-            "fiv" => "5",
-            "si" => "6",
-            "seve" => "7",
-            "eigh" => "8",
-            "nin" => "9",
+            "one" => "1",
+            "two" => "2",
+            "three" => "3",
+            "four" => "4",
+            "five" => "5",
+            "six" => "6",
+            "seven" => "7",
+            "eight" => "8",
+            "nine" => "9",
             _ => first
-        };
+        }.parse::<i32>().unwrap() * 10;
         let last_digit = match last {
-            "on" => "1",
-            "tw" => "2",
-            "thre" => "3",
-            "fou" => "4",
-            "fiv" => "5",
-            "si" => "6",
-            "seve" => "7",
-            "eigh" => "8",
-            "nin" => "9",
+            "one" => "1",
+            "two" => "2",
+            "three" => "3",
+            "four" => "4",
+            "five" => "5",
+            "six" => "6",
+            "seven" => "7",
+            "eight" => "8",
+            "nine" => "9",
             _ => last
-        };
-        calibration_total = calibration_total + first_digit.parse::<i32>().unwrap() * 10 + last_digit.parse::<i32>().unwrap();
+        }.parse::<i32>().unwrap();
+       // println!(" {} => {}, {} => {}", first, first_digit, last, last_digit);
+         calibration_total = calibration_total + first_digit + last_digit;
 
     }
     calibration_total
 
 
 }
-
-fn main(){
+ 
+fn main() {
     // println!("{}", part1());
-    println!("{}", part2());
+    println!("{}", part_two2(INPUT));
 }
