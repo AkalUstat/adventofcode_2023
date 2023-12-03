@@ -2,7 +2,7 @@ use adventofcode_2023::file_reader;
 
 use std::convert::From;
 use std::io::{BufRead};
-use regex::{Regex, Match};
+use regex::{Regex};
 use core::ops::Range;
 use std::cmp::{max, min};
 
@@ -42,7 +42,7 @@ fn part_one() -> usize {
 
     // map into readable data
     for (indx, ln) in file_r.lines().map(|l| l.unwrap()).enumerate() {
-        let mut line = &ln;
+        let line = &ln;
 
         nums.append(&mut num_regex.find_iter(line).map(|m| {
             Numbah {
@@ -98,7 +98,7 @@ fn part_two() -> usize {
 
     // map into readable data
     for (indx, ln) in file_r.lines().map(|l| l.unwrap()).enumerate() {
-        let mut line = &ln;
+        let line = &ln;
 
         nums.append(&mut num_regex.find_iter(line).map(|m| {
             Numbah {
