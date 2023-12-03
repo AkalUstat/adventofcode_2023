@@ -89,3 +89,14 @@ fn calculations() -> (usize, usize) {
     (part_collector, gear_collector)
 
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn correct_outputs() {
+        assert_eq!((529618, 77509019), calculations());
+    }
+
+}
