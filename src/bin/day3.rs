@@ -1,10 +1,10 @@
 use adventofcode_2023::file_reader;
 
-use std::convert::From;
 use std::io::{BufRead};
-use regex::{Regex};
 use core::ops::Range;
 use std::cmp::{max, min};
+
+use regex::{Regex};
 
 fn main() {
     println!("{}", part_one());
@@ -14,23 +14,18 @@ fn main() {
 #[derive(Debug)]
 struct Symbol {
     line_num: usize,
-    start: usize,
-    end: usize,
     range: Range<usize>,
-    symbol: String,
+    // we're not storing the actual symbol since what it is has no impact
 }
 
 #[derive(Debug)]
 struct Numbah {
     line_num: usize,
-    start: usize,
-    end: usize,
     range: Range<usize>,
     number: usize,
 }
 
-
-fn part_one() -> usize {
+fn parse_lines() -> (Vec<Numbah>, Vec<Symbol>) {
     let file_r = file_reader("./inputs/day3.txt");
     let num_regex = Regex::new(r"(\d+)").unwrap();
     let symbol_regex = Regex::new(r"([^a-zA-z\d.\n])").unwrap();
@@ -38,7 +33,6 @@ fn part_one() -> usize {
    let mut nums: Vec<Numbah> = Vec::new();
    let mut syms: Vec<Symbol> = Vec::new();
 
-    let mut part_collector = 0;
 
     // map into readable data
     for (indx, ln) in file_r.lines().map(|l| l.unwrap()).enumerate() {
@@ -47,8 +41,6 @@ fn part_one() -> usize {
         nums.append(&mut num_regex.find_iter(line).map(|m| {
             Numbah {
                 line_num: indx,
-                start: m.start(),
-                end: m.end(),
                 range: m.range(),
                 number: m.as_str().parse::<usize>().unwrap(),
             }
@@ -56,14 +48,18 @@ fn part_one() -> usize {
         syms.append(&mut symbol_regex.find_iter(line).map(|sym| {
             Symbol {
                 line_num: indx,
-                start: sym.start(),
-                end: sym.end(),
                 range: sym.range(),
-                symbol: String::from(sym.as_str()),
             }
         }).collect::<Vec<_>>());
     }
 
+    (nums, syms)
+
+}
+
+fn part_one() -> usize {
+    let mut part_collector = 0;
+    let (nums, syms) = parse_lines();
     // i'll try spinning
     for sym in syms.iter() {
         
@@ -87,39 +83,10 @@ fn part_one() -> usize {
 }
 
 fn part_two() -> usize {
-    let file_r = file_reader("./inputs/day3.txt");
-    let num_regex = Regex::new(r"(\d+)").unwrap();
-    let symbol_regex = Regex::new(r"\*").unwrap();
-
-   let mut nums: Vec<Numbah> = Vec::new();
-   let mut syms: Vec<Symbol> = Vec::new();
 
     let mut gear_collector = 0;
 
-    // map into readable data
-    for (indx, ln) in file_r.lines().map(|l| l.unwrap()).enumerate() {
-        let line = &ln;
-
-        nums.append(&mut num_regex.find_iter(line).map(|m| {
-            Numbah {
-                line_num: indx,
-                start: m.start(),
-                end: m.end(),
-                range: m.range(),
-                number: m.as_str().parse::<usize>().unwrap(),
-            }
-        }).collect::<Vec<_>>());
-        syms.append(&mut symbol_regex.find_iter(line).map(|sym| {
-            Symbol {
-                line_num: indx,
-                start: sym.start(),
-                end: sym.end(),
-                range: sym.range(),
-                symbol: String::from(sym.as_str()),
-            }
-        }).collect::<Vec<_>>());
-    }
-
+    let (nums, syms) = parse_lines();
     // i'll try spinning
     for sym in syms.iter() {
         
