@@ -91,5 +91,4 @@ pub fn part2() -> i32 {
  
 fn main() {
     // println!("{}", part1());
-    println!("{}", part_two2(INPUT));
 }

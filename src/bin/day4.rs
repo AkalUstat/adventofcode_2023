@@ -1,20 +1,39 @@
 use adventofcode_2023::file_reader;
 
 use std::collections::HashMap;
-use std::io::{BufRead};
+use std::io::{BufRead, BufReader};
+use std::cell::RefCell;
 
-fn main() {
-    println!("{}", part_one());
+#[allow(dead_code)]
+#[derive(Debug)]
+struct Card {
+    count: usize,
+    value: usize,
+    num_matches: usize,
+    card_number: usize,
 }
 
-fn part_one() -> (usize, usize) {
-    let file_r = file_reader("./inputs/day4.txt");
+impl Card {
+    fn increment(&mut self, value: usize) {
+        (*self).count += value;
+    }
+}
+
+fn main() {
+    println!("{:?}", algo());
+}
+
+fn algo() -> (usize, usize) {
+    let file_r: BufReader<_> = file_reader("./inputs/day4.txt");
     // map into readable data
     let mut nums_collector = 0;
-    let mut nested_nums_collector = 0;
-    let mut lines = HashMap::new();
+    let mut many_scratches_collector = 0;
+    let mut cards: HashMap<String, RefCell<Card>> = HashMap::new();
 
-    for (indx, ln) in file_r.lines().map(|l| l.unwrap()).enumerate() {
+    let lines: Vec<_> = file_r.lines().map(|l| l.unwrap()).collect();
+    let total_cards = lines.len();
+
+    for (indx, ln) in lines.iter().enumerate() {
         let line = &ln;
         let split: Vec<&str> = line.split(":").collect();
         let strings: Vec<&str> = split[1].split("|").collect();
@@ -35,10 +54,40 @@ fn part_one() -> (usize, usize) {
             .filter(| (_key, &value) | value == 2)
             .map(|(_key, &value)| value);
         let num_matches = total_matches.clone().collect::<Vec<_>>().len();
-        
+
         let matches_sum = total_matches.fold(0, |acc, _num| if acc < 1 { acc + 1 } else { acc * 2 });
-        lines.insert(indx, (num_matches, matches_sum));
-        nums_collector += matches_sum
+        nums_collector += matches_sum;
+
+        cards.insert((indx+1).to_string(), RefCell::new(Card {
+            count: 1,
+            value: matches_sum,
+            num_matches,
+            card_number: indx + 1
+        }));
     }
-    nums_collector
+
+    for i in 1..=total_cards {
+        let index = i.to_string();
+        let card = cards.get(&index).unwrap();
+        for j in (i+1)..=(i + card.borrow().num_matches) {
+            let future_indx = j.to_string();
+            let future_card = cards.get(&future_indx).unwrap();
+            (*future_card).borrow_mut().increment(card.borrow().count * 1);
+
+        }
+    }
+    many_scratches_collector += cards.iter()
+        .map(|(_key, value)| value.borrow().count)
+        .fold(0, |acc, value| acc + value);
+    (nums_collector, many_scratches_collector)
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    #[test]
+    fn correct_outputs() {
+        assert_eq!((17803, 5554894), algo());
+    }
+
 }
