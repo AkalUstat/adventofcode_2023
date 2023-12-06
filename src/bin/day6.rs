@@ -35,11 +35,10 @@ fn part_one() -> usize {
             let floor = vertex_x.floor();
             let ceil = vertex_x.ceil();
 
-            let floor_y = (race.total_time as f32 - floor) * floor;
-            let ceil_y = (race.total_time as f32 - ceil) * ceil;
+            let floor_x = (race.total_time as f32 - floor) * floor;
+            let ceil_x = (race.total_time as f32 - ceil) * ceil;
 
-            println!("({:?}, {:?})", floor_y, ceil_y);
-            (floor_y + ceil_y) / 2.0
+            (floor_x + ceil_x + step) / 2.0
         };
         println!("({:?}, {:?})", vertex_x, vertex_y);
     }
