@@ -1,10 +1,10 @@
 use adventofcode_2023::file_reader;
 
-use std::io::{BufRead};
 use core::ops::Range;
 use std::cmp::{max, min};
+use std::io::BufRead;
 
-use regex::{Regex};
+use regex::Regex;
 
 fn main() {
     let (parts, gears) = calculations();
@@ -33,28 +33,32 @@ fn parse_lines() -> (Vec<Numbah>, Vec<Symbol>) {
     let mut nums: Vec<Numbah> = Vec::new();
     let mut syms: Vec<Symbol> = Vec::new();
 
-
     // map into readable data
     for (indx, ln) in file_r.lines().map(|l| l.unwrap()).enumerate() {
         let line = &ln;
 
-        nums.append(&mut num_regex.find_iter(line).map(|m| {
-            Numbah {
-                line_num: indx,
-                range: m.range(),
-                number: m.as_str().parse::<usize>().unwrap(),
-            }
-        }).collect::<Vec<_>>());
-        syms.append(&mut symbol_regex.find_iter(line).map(|sym| {
-            Symbol {
-                line_num: indx,
-                range: sym.range(),
-            }
-        }).collect::<Vec<_>>());
+        nums.append(
+            &mut num_regex
+                .find_iter(line)
+                .map(|m| Numbah {
+                    line_num: indx,
+                    range: m.range(),
+                    number: m.as_str().parse::<usize>().unwrap(),
+                })
+                .collect::<Vec<_>>(),
+        );
+        syms.append(
+            &mut symbol_regex
+                .find_iter(line)
+                .map(|sym| Symbol {
+                    line_num: indx,
+                    range: sym.range(),
+                })
+                .collect::<Vec<_>>(),
+        );
     }
 
     (nums, syms)
-
 }
 
 fn calculations() -> (usize, usize) {
@@ -64,20 +68,24 @@ fn calculations() -> (usize, usize) {
 
     // i'll try spinning
     for sym in syms.iter() {
-
         let range_min = sym.range.start - 1;
         let range_max = sym.range.end + 1;
 
         let mut gear_nums: Vec<_> = Vec::new();
-        let possible_nums: Vec<_>  = nums.iter().filter(|num| {
-            num.line_num == sym.line_num + 1
-                || num.line_num == sym.line_num
-                || num.line_num == sym.line_num - 1
-        }).collect();
+        let possible_nums: Vec<_> = nums
+            .iter()
+            .filter(|num| {
+                num.line_num == sym.line_num + 1
+                    || num.line_num == sym.line_num
+                    || num.line_num == sym.line_num - 1
+            })
+            .collect();
         for num in possible_nums.iter() {
             let num_start = num.range.start;
             let num_end = num.range.end;
-            if max(range_max, num_end) - min(range_min, num_start) < (range_max - range_min) + (num_end - num_start) {
+            if max(range_max, num_end) - min(range_min, num_start)
+                < (range_max - range_min) + (num_end - num_start)
+            {
                 part_collector += num.number;
                 gear_nums.push(num);
             }
@@ -87,7 +95,6 @@ fn calculations() -> (usize, usize) {
         }
     }
     (part_collector, gear_collector)
-
 }
 
 #[cfg(test)]
@@ -98,5 +105,4 @@ mod test {
     fn correct_outputs() {
         assert_eq!((529618, 77509019), calculations());
     }
-
 }

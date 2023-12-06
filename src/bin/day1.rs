@@ -37,8 +37,10 @@ pub fn part2() -> i32 {
     let file = File::open("./inputs/day1.txt").unwrap();
     let reader = BufReader::new(file);
 
-    let patterns = &["1", "2", "3", "4", "5", "6", "7", "8", "9", "one", "two", "three", "four", "five",
-                        "six", "seven", "eight", "nine"];
+    let patterns = &[
+        "1", "2", "3", "4", "5", "6", "7", "8", "9", "one", "two", "three", "four", "five", "six",
+        "seven", "eight", "nine",
+    ];
     let ac = AhoCorasick::new(patterns).unwrap();
 
     let mut lines_iter = reader.lines().map(|l| l.unwrap());
@@ -66,8 +68,11 @@ pub fn part2() -> i32 {
             "seven" => "7",
             "eight" => "8",
             "nine" => "9",
-            _ => first
-        }.parse::<i32>().unwrap() * 10;
+            _ => first,
+        }
+        .parse::<i32>()
+        .unwrap()
+            * 10;
         let last_digit = match last {
             "one" => "1",
             "two" => "2",
@@ -78,17 +83,16 @@ pub fn part2() -> i32 {
             "seven" => "7",
             "eight" => "8",
             "nine" => "9",
-            _ => last
-        }.parse::<i32>().unwrap();
-       // println!(" {} => {}, {} => {}", first, first_digit, last, last_digit);
-         calibration_total = calibration_total + first_digit + last_digit;
-
+            _ => last,
+        }
+        .parse::<i32>()
+        .unwrap();
+        // println!(" {} => {}, {} => {}", first, first_digit, last, last_digit);
+        calibration_total = calibration_total + first_digit + last_digit;
     }
     calibration_total
-
-
 }
- 
+
 fn main() {
     // println!("{}", part1());
 }

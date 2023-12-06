@@ -1,13 +1,13 @@
 use adventofcode_2023::file_reader;
 
-use std::io::{BufRead};
 use regex::Regex;
+use std::io::BufRead;
 fn main() {
     println!("{}", part_one());
     println!("{}", part_two());
 }
 
-fn part_one() -> i32{
+fn part_one() -> i32 {
     let filer = file_reader("./inputs/day2.txt");
     let id_regex = Regex::new(r"(\d+)").unwrap();
 
@@ -23,25 +23,27 @@ fn part_one() -> i32{
         for value_set in value_str.split(";") {
             let set = &value_set;
             for color_set in set.split(", ") {
-                let vec = color_set.split(" ").filter(|c| c != &"").collect::<Vec<&str>>();
+                let vec = color_set
+                    .split(" ")
+                    .filter(|c| c != &"")
+                    .collect::<Vec<&str>>();
                 match vec[1] {
                     "red" => {
                         if vec[0].parse::<i32>().unwrap() > max_red {
                             continue 'outer;
                         }
-                    },
+                    }
                     "blue" => {
                         if vec[0].parse::<i32>().unwrap() > max_blue {
                             continue 'outer;
                         }
-                    },
+                    }
                     "green" => {
                         if vec[0].parse::<i32>().unwrap() > max_green {
                             continue 'outer;
                         }
-                    },
-                    _ => {
                     }
+                    _ => {}
                 }
             }
         }
@@ -66,28 +68,30 @@ fn part_two() -> i32 {
             let set = &value_set;
 
             for color_set in set.split(", ") {
-                let vec = color_set.split(" ").filter(|c| c != &"").collect::<Vec<&str>>();
+                let vec = color_set
+                    .split(" ")
+                    .filter(|c| c != &"")
+                    .collect::<Vec<&str>>();
                 match vec[1] {
                     "red" => {
                         let val = vec[0].parse::<i32>().unwrap();
                         if val > max_red_num {
                             max_red_num = val;
                         }
-                    },
+                    }
                     "blue" => {
                         let val = vec[0].parse::<i32>().unwrap();
                         if val > max_blue_num {
                             max_blue_num = val;
                         }
-                    },
+                    }
                     "green" => {
                         let val = vec[0].parse::<i32>().unwrap();
                         if val > max_green_num {
                             max_green_num = val;
                         }
-                    },
-                    _ => {
                     }
+                    _ => {}
                 }
             }
         }
@@ -95,5 +99,3 @@ fn part_two() -> i32 {
     }
     power_collector
 }
-
-
