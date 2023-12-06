@@ -95,14 +95,22 @@ fn algo() -> (usize, usize) {
         while seed_ranges.len() > 0 {
             let Range { start, end } = seed_ranges.pop().unwrap();
             let mut found_overlap = false;
-            for Mapping { dest_start, src_start, range } in block.range.iter() {
+            for Mapping {
+                dest_start,
+                src_start,
+                range,
+            } in block.range.iter()
+            {
                 let overlap_start = max(start, *src_start);
                 let overlap_end = min(end, *src_start + *range);
 
                 // if we have an overlap
                 if overlap_end > overlap_start {
                     found_overlap = true;
-                    updated_values.push((dest_start + (overlap_start - src_start))..(dest_start + (overlap_end - src_start)));
+                    updated_values.push(
+                        (dest_start + (overlap_start - src_start))
+                            ..(dest_start + (overlap_end - src_start)),
+                    );
 
                     // covers values maybe not caught before the overlap
                     if overlap_start > start {
