@@ -46,4 +46,6 @@ One](https://www.reddit.com/r/adventofcode/comments/18bimer/comment/kc52zpl/?utm
 > So what's the runtime of this? If the absolute worst case would be something like sizeof(seeds)*sizeof(map 1) * sizeof(map 2) * sizeof(map 3) ... * sizeof(map n), which is still only a couple of seconds. Actual runtime is more like n * seeds * 2  
 > The worst case is very unlikely though  
 
-This is from [this](https://www.reddit.com/r/adventofcode/comments/18bimer/comment/kc4y6io/?utm_source=share&utm_medium=web2x&context=3) comment thread, which is worth a read.
+These is from [this](https://www.reddit.com/r/adventofcode/comments/18bimer/comment/kc4y6io/?utm_source=share&utm_medium=web2x&context=3) comment thread, which is worth a read.
+
+Here is [another thread](https://www.reddit.com/r/adventofcode/comments/18buwiz/2023_day_5_part_2_can_someone_explain_a_more/?utm_source=share&utm_medium=web2x&context=3) worth a read
