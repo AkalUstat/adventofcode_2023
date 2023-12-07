@@ -120,10 +120,28 @@ fn get_range(b: usize, c: usize) -> core::ops::Range<f32> {
      let b_sq = (b.pow(2) as f32).floor();
     let second_part = 4.0 * c as f32;
     let discriminant: f32 = (b_sq - second_part).sqrt();
-    let root_1 = ((1.0 * b as f32) - discriminant) / 2.0;
-    let root_2 = ((1.0 * b as f32) + discriminant ) / 2.0;
+    let mut root_1 = ((1.0 * b as f32) - discriminant) / 2.0;
+    let mut root_2 = ((1.0 * b as f32) + discriminant ) / 2.0;
+
+
+    root_1 = root_2.ceil();
+    root_2 = root_2.floor();
+
     
+    // while test_value(&root_1, &b, &c) {
+    //     println!("{}", test_value(&root_1, &b, &c));
+    //    root_1 += 1.0; 
+    // }
+    
+    // while test_value(&root_2, &b, &c) {
+    //     println!("{}", test_value(&root_1, &b, &c));
+    //     root_2 -= 1.0;
+    // }
+
     println!("{} {}", root_1, root_2);
-    (root_2.floor() + 1.0 )..(root_1.ceil() -1.0 )
+    (root_1)..(root_2)
 }
 
+fn test_value(value: &f32, time: &usize, record: &usize) -> bool {
+    (((*time as f32) - value) * value) - *record as f32 == 0.0
+}
