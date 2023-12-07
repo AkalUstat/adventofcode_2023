@@ -1,0 +1,113 @@
+use adventofcode_2023::get_files_lines;
+use std::str::FromStr;
+use std::collections::HashMap;
+
+// so we can iterate over enum values (just makes things easier for me)
+use strum::IntoEnumIterator;
+use strum_macros::EnumIter;
+fn main() {
+}
+
+#[derive(Debug, PartialEq, Eq, EnumIter, Hash, Copy, Clone)]
+enum Card {
+    Two,
+    Three,
+    Four,
+    Five,
+    Six,
+    Seven,
+    Eight,
+    Nine,
+    T,
+    J,
+    Q,
+    K,
+    A,
+}
+
+// from https://www.reddit.com/r/rust/comments/2vqama/comment/cojzafn/?utm_source=share&utm_medium=web2x&context=3
+impl FromStr for Card {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<Card, ()> {
+        match s {
+            "A" => Ok(Card::A),
+            "K" => Ok(Card::K),
+            "Q" => Ok(Card::Q),
+            "J" => Ok(Card::J),
+            "T" => Ok(Card::T),
+            "9" => Ok(Card::Nine),
+            "8" => Ok(Card::Eight),
+            "7" => Ok(Card::Seven),
+            "6" => Ok(Card::Six),
+            "5" => Ok(Card::Five),
+            "4" => Ok(Card::Four),
+            "3" => Ok(Card::Three),
+            "2" => Ok(Card::Two),
+            _ => Err(())
+        }
+    }
+}
+
+#[derive(Debug)]
+enum Hand  {
+    FiveKind(Card),
+    FourKind(Card, Card),
+    FullHouse(Card, Card),
+    ThreeKind(Card, Card, Card),
+    TwoPair(Card, Card, Card),
+    OnePair(Card, Card, Card, Card),
+    HighCard(Card, Card, Card, Card, Card)
+}
+
+impl From<[Card; 5]> for Hand {
+    fn from(card_arr: [Card; 5]) -> Self {
+        let mut collections = HashMap::new();
+        for card in Card::iter() {
+            let num_card = &card_arr.into_iter().filter(|&val| val == card).count();
+            if num_card >= &1 {
+                collections.entry(card).and_modify(|count| *count += num_card).or_insert(1);
+            }
+        }
+
+        // Case: Five of a Kind - All same
+        let number_of_cards: Vec<(Card, usize)> = collections.into_iter().collect();
+
+        let fives = &number_of_cards.iter().filter(|(_, value))| value == &5).collect::<Vec<_>>();
+        let fours = &number_of_cards.iter().filter(|(_, value))| value == &4).collect::<Vec<_>>();
+        let threes = &number_of_cards.iter().filter((_, (_, value))| value == &3).collect::<Vec<_>>();
+        let twos = &number_of_cards.iter().filter(|((_, value))| value == &2).collect::<Vec<_>>();
+        let ones = &number_of_cards.iter().filter(|((_, value))| value == &1).collect::<Vec<_>>();
+
+
+        if fives.len() == 1 {
+            Hand::FiveKind(fives[0])
+        } else if fours.len() == 1 {
+            Hand::FourKind(Card::A, Card::K)
+        } else if threes.len() == 1 && twos.len() == 1 {
+            Hand::FullHouse(Card::A, Card::A)
+        } else if threes.len() == 1 && twos.len() == 2 {
+            Hand::ThreeKind(Card::A, Card::A, Card::A)
+        } else if twos.len() == 2 && ones.len() == 1 {
+            Hand::TwoPair(Card::A, Card::A, Card::A)
+        } else if twos.len() == 1 && ones.len() == 3 {
+            Hand::OnePair(Card::A, Card::A, Card::A, Card::A)
+        }
+        else {
+            Hand::HighCard(Card::A, Card::A, Card::A, Card::A, Card::A)
+        }
+        // Case: Four of a kind - 4 same, 1 diff
+        // Case: Full House - 3 same, 2 same
+        // Case: Three of a kind - 3 same, 2 diff
+        // Case: Two pair - 2 same, 2 same, 1 diff
+        // Case: 1 pair - 2 same, 3 diff
+        // case: High card - all diff
+
+    }
+}
+// #[derive(Debug)]
+// struct Hand {
+  //  total_time: usize,
+  //  record: usize,
+//}
+

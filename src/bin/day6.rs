@@ -67,21 +67,20 @@ fn part_two() -> usize {
 }
 
 fn get_range(b: usize, c: usize) -> core::ops::RangeInclusive<usize> {
-     let b_sq = (b.pow(2) as f32).floor();
+    let b_sq = (b.pow(2) as f32).floor();
     let second_part = 4.0 * c as f32;
     let discriminant: f32 = (b_sq - second_part).sqrt();
 
     let exact_root_1 = ((1.0 * b as f32) - discriminant) / 2.0;
-    let exact_root_2 = ((1.0 * b as f32) + discriminant ) / 2.0;
+    let exact_root_2 = ((1.0 * b as f32) + discriminant) / 2.0;
 
     let mut root_1 = exact_root_1.ceil() as usize;
     let mut root_2 = exact_root_2.floor() as usize;
 
-    
     while test_value(&root_1, &b, &c) {
-       root_1 += 1; 
+        root_1 += 1;
     }
-    
+
     while test_value(&root_2, &b, &c) {
         root_2 -= 1;
     }
@@ -90,7 +89,7 @@ fn get_range(b: usize, c: usize) -> core::ops::RangeInclusive<usize> {
 }
 
 fn test_value(value: &usize, time: &usize, record: &usize) -> bool {
-    (((*time as f32) - *value as f32)  * *value as f32) - *record as f32 == 0.0
+    (((*time as f32) - *value as f32) * *value as f32) - *record as f32 == 0.0
 }
 
 #[cfg(test)]
