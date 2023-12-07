@@ -86,7 +86,7 @@ fn part_one() -> f32 {
     record_beating_collector
 }
 
-fn part_two() -> f32 {
+fn part_two() -> usize {
     let lines: Vec<_> = get_files_lines("./aoc-inputs/2023/day6.txt");
     let data_strs: Vec<_> = lines
         .iter()
@@ -112,8 +112,18 @@ fn part_two() -> f32 {
         record: distance_record.parse::<usize>().unwrap(),
     };
 
+    let mut collection = 0;
+    for i in 0..race.total_time {
+        let dist = (race.total_time - i) * i;
+        if dist > race.record {
+            collection += 1;
+        }
+    }
+    collection
+    /*
+
      let range = get_range(race.total_time, race.record);
-     range.end - range.start
+     range.end - range.start */
 }
 
 fn get_range(b: usize, c: usize) -> core::ops::Range<f32> {
