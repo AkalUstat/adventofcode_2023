@@ -33,13 +33,31 @@ struct Race {
  * x = (-T +- sqrt( (T)^2 - 4(-1)(-R) )) / 2
  *
  * Thus,
- * x1 = (-T +- sqrt( (T)^2 - 4(-1)(-R) )) / 2
- * x2 = (-T +- sqrt( (T)^2 - 4(-1)(-R) )) / 2
+ * x1 = (-T + sqrt( (T)^2 - 4(-1)(-R) )) / 2(-1)
+ *     = (-T + sqrt (T^2 - 4R)) / -2
+ *     = (T - sqrt(T^2 - 4R)) / 2
+ * x2 = (-T - sqrt( (T)^2 - 4(-1)(-R) )) / 2(-1)
+ *     = (-T - sqrt (T^2 - 4R)) / -2
+ *     = (T + sqrt(T^2 - 4R)) / 2
+ *
+ * Then, when we combine into x2 - x1 to generate our range:
+ *
+ *  2final_r = T + sqrt( (T)^2 - 4R) - T + sqrt(T^2 - 4R)
+ *  2final_r = 2sqrt(T^2 - 4R)
+ *  final_r = sqrt(T^2 - 4R)
+ *
+ *  Thus, final_r = sqrt(b^2 - 4R)...simply the discriminat!
+ *
+ *  Oh MY GOD I've forgotten HS algebra *smacks head against wall*.
+ *
+ *  Given our values, with a = 1, this discriminant will be the range.
+ *
+ *  See this quora thread: https://math.stackexchange.com/a/1335507
  *
  *
  */
 
-fn part_one() -> usize {
+fn part_one() -> f32 {
     let lines: Vec<_> = get_files_lines("./aoc-inputs/2023/day6sample.txt");
     let data_strs: Vec<_> = lines
         .iter()
@@ -58,18 +76,17 @@ fn part_one() -> usize {
         });
     }
 
-    let mut record_beating_collector = 1;
+    let mut record_beating_collector: f32 = 1.0;
     for race in data.iter() {
-        let (x1, x2) = quadratic_formula(&-1, &(race.total_time as isize), &(race.record as isize));
-        println!("{}, {}", x1, x2);
-        record_beating_collector *= x2.floor() as usize - (x1+1.0).ceil() as usize + 1;
-        // record_beating_collector *= total;
+        // println!("{}, {}", get_range(race.total_time, race.record), record_beating_collector);
+        let range = get_range(race.total_time, race.record);
+        record_beating_collector *= (range.end - range.start);
     }
 
     record_beating_collector
 }
 
-fn part_two() -> usize {
+fn part_two() -> f32 {
     let lines: Vec<_> = get_files_lines("./aoc-inputs/2023/day6.txt");
     let data_strs: Vec<_> = lines
         .iter()
@@ -95,16 +112,18 @@ fn part_two() -> usize {
         record: distance_record.parse::<usize>().unwrap(),
     };
 
-    let (x1, x2) = quadratic_formula(&-1, &(race.total_time as isize), &(race.record as isize));
-    x2.ceil() as usize - x1.ceil() as usize
+     let range = get_range(race.total_time, race.record);
+     range.end - range.start
 }
 
-fn quadratic_formula(a: &isize, b: &isize, c: &isize) -> (f32, f32) {
-    let discriminant = b.pow(2) as f32 - (4 * a * (c * -1)) as f32;
-
-    let x1: f32 = ((*b * -1) as f32 + discriminant.sqrt()) / (2.0 * (*a as f32));
-    let x2: f32 = ((*b * -1) as f32 - discriminant.sqrt()) / (2.0 * (*a as f32));
-
-    (x1, x2)
+fn get_range(b: usize, c: usize) -> core::ops::Range<f32> {
+     let b_sq = (b.pow(2) as f32).floor();
+    let second_part = 4.0 * c as f32;
+    let discriminant: f32 = (b_sq - second_part).sqrt();
+    let root_1 = ((1.0 * b as f32) - discriminant) / 2.0;
+    let root_2 = ((1.0 * b as f32) + discriminant ) / 2.0;
+    
+    println!("{} {}", root_1, root_2);
+    (root_2.floor() + 1.0 )..(root_1.ceil() -1.0 )
 }
 
