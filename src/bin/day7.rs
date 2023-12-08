@@ -7,7 +7,7 @@ use std::str::FromStr;
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 fn main() {
-    println!("Part One: {}", part_one("./aoc-inputs/2023/day7.txt"));
+    //println!("Part One: {}", part_one("./aoc-inputs/2023/day7.txt"));
     println!("Part Two: {}", part_two("./aoc-inputs/2023/day7sample.txt"));
 }
 
@@ -203,6 +203,7 @@ fn part_one(file_path: &str) -> usize {
             return Ordering::Equal;
         }
     });
+    println!("{:?}", hands);
     hands
         .iter()
         .enumerate()
@@ -277,31 +278,60 @@ impl From<[CardTwo; 5]> for HandTwo {
             }
         }
 
-        println!("{:?}", times); 
-        let number_of_cards: Vec<_> = times.into_iter().collect();
+        let times_clone = times.clone();
+        let mut count_map = times_clone
+                .iter()
+                .collect::<Vec<_>>();
+        count_map
+                .sort_by(|(card1, count1), (card2, count2)| {
+                    if count1 < count2 {
+                        return Ordering::Greater;
+                    } else if count2 < count1 {
+                        return Ordering::Less;
+                    } else {
+                        if card1 < card2 {
+                            return Ordering::Greater;
+                        } else if card2 < card1 {
+                            return Ordering::Less;
+                        } else {
+                            return Ordering::Equal;
+                        }
+                    }
+                });
+
+
+        if let Some((_, num_js)) = &count_map.iter().find(|(card, _)| *card == &CardTwo::J) {
+            if *num_js != &5 {
+                let greatest = count_map[0].0;
+                times.entry(*greatest).and_modify(|count| *count += *num_js);
+                times.remove(&CardTwo::J);
+            }
+        }
+
+        let number_of_cards: &Vec<_> = &times.into_iter().collect();
 
         let num_js = &number_of_cards
             .iter()
             .filter(|(key, _)| key == &CardTwo::J)
             .count();
 
-        let mut fives = &mut number_of_cards
+        let fives = &mut number_of_cards
             .iter()
             .filter(|(_, value)| value == &5)
             .count();
-        let mut fours = &mut number_of_cards
+        let fours = &mut number_of_cards
             .iter()
             .filter(|(_, value)| value == &4)
             .count();
-        let mut threes = &mut number_of_cards
+        let threes = &mut number_of_cards
             .iter()
             .filter(|(_, value)| value == &3)
             .count();
-        let mut twos = &mut number_of_cards
+        let  twos = &mut number_of_cards
             .iter()
             .filter(|(_, value)| value == &2)
             .count();
-        let mut ones = &mut number_of_cards
+        let ones = &mut number_of_cards
             .iter()
             .filter(|(_, value)| value == &1)
             .count();
@@ -418,6 +448,7 @@ fn part_two(file_path: &str) -> usize {
             return Ordering::Equal;
         }
     });
+    println!("{:?}", hands);
     hands
         .iter()
         .enumerate()
