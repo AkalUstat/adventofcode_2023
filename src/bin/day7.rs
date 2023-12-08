@@ -312,11 +312,6 @@ impl From<[CardTwo; 5]> for HandTwo {
 
         let number_of_cards: &Vec<_> = &times.into_iter().collect();
 
-        let num_js = &number_of_cards
-            .iter()
-            .filter(|(key, _)| key == &CardTwo::J)
-            .count();
-
         let fives = &mut number_of_cards
             .iter()
             .filter(|(_, value)| value == &5)
