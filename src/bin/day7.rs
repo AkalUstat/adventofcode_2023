@@ -338,16 +338,6 @@ impl From<[CardTwo; 5]> for HandTwo {
             .filter(|(_, value)| value == &1)
             .count();
 
-        if num_js > &0 {
-            if fours == &1 {
-                *fours = 0;
-                *fives += 1;
-            } else if threes == &1 {
-                *threes = 0;
-                *fours += 1;
-            }
-        }
-
         // Case: Five of a Kind - All same
         if fives == &1 {
             HandTwo::FiveKind { value: card_arr }
