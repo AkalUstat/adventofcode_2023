@@ -1,14 +1,15 @@
 use adventofcode_2023::get_files_lines;
 use std::cmp::Ordering;
 use std::collections::HashMap;
+use std::fmt::Display;
 use std::str::FromStr;
 
 // so we can iterate over enum values (just makes things easier for me)
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 fn main() {
-    //println!("Part One: {}", part_one("./aoc-inputs/2023/day7.txt"));
-    println!("Part Two: {}", part_two("./aoc-inputs/2023/day7sample.txt"));
+    println!("Part One: {}", part_one("./aoc-inputs/2023/day7.txt"));
+    println!("Part Two: {}", part_two("./aoc-inputs/2023/day7.txt"));
 }
 
 // Part One
@@ -279,30 +280,31 @@ impl From<[CardTwo; 5]> for HandTwo {
         }
 
         let times_clone = times.clone();
-        let mut count_map = times_clone
-                .iter()
-                .collect::<Vec<_>>();
-        count_map
-                .sort_by(|(card1, count1), (card2, count2)| {
-                    if count1 < count2 {
-                        return Ordering::Greater;
-                    } else if count2 < count1 {
-                        return Ordering::Less;
-                    } else {
-                        if card1 < card2 {
-                            return Ordering::Greater;
-                        } else if card2 < card1 {
-                            return Ordering::Less;
-                        } else {
-                            return Ordering::Equal;
-                        }
-                    }
-                });
-
+        let mut count_map = times_clone.iter().collect::<Vec<_>>();
+        count_map.sort_by(|(card1, count1), (card2, count2)| {
+            if count1 < count2 {
+                return Ordering::Greater;
+            } else if count2 < count1 {
+                return Ordering::Less;
+            } else {
+                if card1 < card2 {
+                    return Ordering::Greater;
+                } else if card2 < card1 {
+                    return Ordering::Less;
+                } else {
+                    return Ordering::Equal;
+                }
+            }
+        });
 
         if let Some((_, num_js)) = &count_map.iter().find(|(card, _)| *card == &CardTwo::J) {
             if *num_js != &5 {
-                let greatest = count_map[0].0;
+                // find the card of greatest number where it isn't J
+                let greatest = count_map
+                    .iter()
+                    .filter(|(card, _)| *card != &CardTwo::J)
+                    .collect::<Vec<_>>()[0]
+                    .0;
                 times.entry(*greatest).and_modify(|count| *count += *num_js);
                 times.remove(&CardTwo::J);
             }
@@ -327,7 +329,7 @@ impl From<[CardTwo; 5]> for HandTwo {
             .iter()
             .filter(|(_, value)| value == &3)
             .count();
-        let  twos = &mut number_of_cards
+        let twos = &mut number_of_cards
             .iter()
             .filter(|(_, value)| value == &2)
             .count();
@@ -387,10 +389,57 @@ impl HandTwo {
     }
 }
 
+impl std::fmt::Display for HandTwo {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            HandTwo::FiveKind { value } => write!(
+                f,
+                "FiveKind: {:?}{:?}{:?}{:?}{:?}",
+                value[0], value[1], value[2], value[3], value[4]
+            ),
+            HandTwo::FourKind { value } => write!(
+                f,
+                "FourKind: {:?}{:?}{:?}{:?}{:?}",
+                value[0], value[1], value[2], value[3], value[4]
+            ),
+            HandTwo::FullHouse { value } => write!(
+                f,
+                "FullHouse: {:?}{:?}{:?}{:?}{:?}",
+                value[0], value[1], value[2], value[3], value[4]
+            ),
+            HandTwo::ThreeKind { value } => write!(
+                f,
+                "ThreeKind: {:?}{:?}{:?}{:?}{:?}",
+                value[0], value[1], value[2], value[3], value[4]
+            ),
+            HandTwo::TwoPair { value } => write!(
+                f,
+                "TwoPair: {:?}{:?}{:?}{:?}{:?}",
+                value[0], value[1], value[2], value[3], value[4]
+            ),
+            HandTwo::OnePair { value } => write!(
+                f,
+                "OnePair: {:?}{:?}{:?}{:?}{:?}",
+                value[0], value[1], value[2], value[3], value[4]
+            ),
+            HandTwo::HighCard { value } => write!(
+                f,
+                "HighCard: {:?}{:?}{:?}{:?}{:?}",
+                value[0], value[1], value[2], value[3], value[4]
+            ),
+        }
+    }
+}
 #[derive(Debug)]
 struct PlayTwo {
     hand: HandTwo,
     bet: usize,
+}
+
+impl Display for PlayTwo {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Hand: {}, Bet: {}", self.hand, self.bet)
+    }
 }
 
 fn part_two(file_path: &str) -> usize {
@@ -448,7 +497,9 @@ fn part_two(file_path: &str) -> usize {
             return Ordering::Equal;
         }
     });
-    println!("{:?}", hands);
+    for hand in hands.iter() {
+        println!("{}", hand);
+    }
     hands
         .iter()
         .enumerate()
@@ -462,8 +513,14 @@ mod test {
     #[test]
     fn part_one_is_correct() {
         assert_eq!(6440, part_one("./aoc-inputs/2023/day7sample.txt"));
+        assert_eq!(6592, part_one("./aoc-inputs/2023/day7sample2.txt"));
         assert_eq!(252295678, part_one("./aoc-inputs/2023/day7.txt"));
     }
 
-    fn part_two_is_correct() {}
+    #[test]
+    fn part_two_is_correct() {
+        assert_eq!(5905, part_two("./aoc-inputs/2023/day7sample.txt"));
+        assert_eq!(6839, part_two("./aoc-inputs/2023/day7sample2.txt"));
+        assert_eq!(250577259, part_two("./aoc-inputs/2023/day7.txt"));
+    }
 }
