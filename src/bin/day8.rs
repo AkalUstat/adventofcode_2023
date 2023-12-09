@@ -69,7 +69,7 @@ fn part_one(file_path: &str) -> usize {
 
     let starting_location: &Location = &map.iter().find(|pos| pos.position == "AAA").unwrap();
 
-    calculate_path(starting_location, "ZZZ", 0..3 , path, map)
+    calculate_path(starting_location, "ZZZ", 0..3, path, map)
 }
 
 fn part_two(file_path: &str) -> usize {
@@ -78,25 +78,44 @@ fn part_two(file_path: &str) -> usize {
     let path: &Vec<_> = &get_path(&lines);
     let map: &Vec<Location> = &get_map(&lines);
 
-    let starting_locations = &map.iter().filter(|loc| &loc.position[2..3] == "A").collect::<Vec<_>>();
+    let starting_locations = &map
+        .iter()
+        .filter(|loc| &loc.position[2..3] == "A")
+        .collect::<Vec<_>>();
     let mut path_val_to_z: Vec<usize> = vec![];
-    
+
     for loc in starting_locations {
-        path_val_to_z.push(calculate_path(loc, "Z", 2..3 , path, map))
+        path_val_to_z.push(calculate_path(loc, "Z", 2..3, path, map))
     }
 
     while path_val_to_z.len() > 1 {
-        path_val_to_z = path_val_to_z.chunks(2).map(|values| if values.len() == 1 {values[0]} else {lcm(values[0],values[1])}).collect::<Vec<_>>();
+        path_val_to_z = path_val_to_z
+            .chunks(2)
+            .map(|values| {
+                if values.len() == 1 {
+                    values[0]
+                } else {
+                    lcm(values[0], values[1])
+                }
+            })
+            .collect::<Vec<_>>();
     }
 
     path_val_to_z[0]
 }
 fn get_path(lines: &Vec<String>) -> Vec<Movement> {
-    lines[0] .split("") .filter(|s| s != &"") .map(|s| s.parse::<Movement>().unwrap()) .collect()
+    lines[0]
+        .split("")
+        .filter(|s| s != &"")
+        .map(|s| s.parse::<Movement>().unwrap())
+        .collect()
 }
 
 fn get_map(lines: &Vec<String>) -> Vec<Location> {
-    lines[1..] .iter() .map(|s| s.parse::<Location>().unwrap()) .collect()
+    lines[1..]
+        .iter()
+        .map(|s| s.parse::<Location>().unwrap())
+        .collect()
 }
 
 fn calculate_path(
@@ -104,7 +123,8 @@ fn calculate_path(
     end_str: &str,
     find_pos: Range<usize>,
     path: &Vec<Movement>,
-    map: &Vec<Location>) -> usize {
+    map: &Vec<Location>,
+) -> usize {
     let mut position_num = 0;
     let mut current_position = starting_loc;
 
@@ -116,13 +136,19 @@ fn calculate_path(
 
         match next_direction {
             Movement::Right => {
-               next_position = &current_position.right_path;
-               current_position = &map.iter().find(|pos| pos.position == *next_position).unwrap();
-            },
+                next_position = &current_position.right_path;
+                current_position = &map
+                    .iter()
+                    .find(|pos| pos.position == *next_position)
+                    .unwrap();
+            }
             Movement::Left => {
-               next_position = &current_position.left_path;
-               current_position = &map.iter().find(|pos| pos.position == *next_position).unwrap();
-            },
+                next_position = &current_position.left_path;
+                current_position = &map
+                    .iter()
+                    .find(|pos| pos.position == *next_position)
+                    .unwrap();
+            }
         }
     }
     position_num
@@ -147,9 +173,9 @@ fn gcd(a: usize, b: usize) -> usize {
 
     let mut remainder;
     while (num1 % num2) > 0 {
-       remainder = num1 % num2;
-       num1 = num2;
-       num2 = remainder;
+        remainder = num1 % num2;
+        num1 = num2;
+        num2 = remainder;
     }
 
     return num2;
