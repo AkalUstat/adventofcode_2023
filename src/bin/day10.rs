@@ -28,7 +28,6 @@ enum Pipe {
 #[derive(Debug, Eq, PartialEq, Hash, Copy, Clone)]
 struct LoopElement {
     pipe: Pipe,
-    prev_connection: Option<Direction>,
     x: usize,
     y: usize,
 }
@@ -50,8 +49,52 @@ impl FromStr for Pipe {
         }
     }
 }
-
 impl Pipe {
+    pub fn get_type_of_s(pipe: &LoopElement, grid: &Vec<Vec<char>>) -> Pipe {
+        let LoopElement { x, y, .. } = pipe;
+        let [west, east, north, south] = get_around_elements(*x, *y, grid);
+        // println!("North: {:#?}, South: {:#?}, West: {:#?}, East: {:#?}", north_elem, south_elem, west_elem, east_elem);
+        let mut pipe_type = HashSet::from([
+            Pipe::Vertical,
+            Pipe::Horizontal,
+            Pipe::NEBend,
+            Pipe::NWBend,
+            Pipe::SEBend,
+            Pipe::SWBend,
+        ]);
+
+        if let Some(west_elem) = west {
+            if !west_elem.pipe.get_connections().contains(&Direction::W) {
+                pipe_type.remove(&Pipe::Horizontal);
+                pipe_type.remove(&Pipe::NWBend);
+                pipe_type.remove(&Pipe::SWBend);
+            }
+        }
+        if let Some(east_elem) = east {
+            if !east_elem.pipe.get_connections().contains(&Direction::E) {
+                pipe_type.remove(&Pipe::Horizontal);
+                pipe_type.remove(&Pipe::NEBend);
+                pipe_type.remove(&Pipe::SEBend);
+            }
+        }
+        if let Some(north_elem) = north {
+            if !north_elem.pipe.get_connections().contains(&Direction::N) {
+                pipe_type.remove(&Pipe::Vertical);
+                pipe_type.remove(&Pipe::NEBend);
+                pipe_type.remove(&Pipe::NWBend);
+            }
+        }
+        if let Some(south_elem) = south {
+            if !south_elem.pipe.get_connections().contains(&Direction::S) {
+                pipe_type.remove(&Pipe::Vertical);
+                pipe_type.remove(&Pipe::SWBend);
+                pipe_type.remove(&Pipe::SEBend);
+            }
+        }
+        println!("{:?}", pipe_type);
+
+        *pipe_type.iter().next().unwrap()
+    }
     fn get_connections(&self) -> [Direction; 2] {
         match self {
             Pipe::Vertical => [Direction::N, Direction::S],
@@ -60,47 +103,66 @@ impl Pipe {
             Pipe::NWBend => [Direction::N, Direction::W],
             Pipe::SEBend => [Direction::S, Direction::E],
             Pipe::SWBend => [Direction::S, Direction::W],
-            Pipe::Ground => [Direction::I, Direction::I],
-            Pipe::Start => [Direction::All, Direction::All],
+            Pipe::Ground | Pipe::Start => [Direction::I, Direction::I],
         }
-    }
-
-    fn connects(&self, other: &Pipe, prev_connection: Option<&Direction>) -> Option<Direction> {
-        let mut self_maps = self
-            .get_connections()
-            .iter()
-            .collect::<Vec<_>>();
-
-        if let Some(prev_dir) = prev_connection {
-            self_maps
-                .iter_mut()
-                .filter(|&x| x != &prev_dir)
-                .collect::<Vec<_>>();
-        }
-        let other_maps = other
-            .get_connections()
-            .iter()
-            .collect::<Vec<_>>();
-        println!("{:?} to {:?}", self_maps, other_maps);
-
-        if self == &Pipe::Ground || other == &Pipe::Ground {
-            return None;
-        }
-
-        if self_maps[0] == &Direction::All || self_maps[1] == &Direction::All {
-            return None;
-        }
-
-        self_maps.iter().find(|x| other_maps.contains(&x))
-        
     }
 }
 
+// Returns an [Option<LoopElement>; 4] => 0 -> West, 1 -> East, 2 -> North, 3 -> South
+fn get_around_elements(x: usize, y: usize, grid: &Vec<Vec<char>>) -> [Option<LoopElement>; 4] {
+    let mut surrounding_elems: [Option<LoopElement>; 4] = [None; 4];
+    // looks at (0, -1)W, (0, 1)E, (-1, 0)N , (1, 0)S
+    for (indx, (dy, dx)) in [(1, 0), (1, 2), (0, 1), (2, 1)].iter().enumerate() {
+        let cx = (x + dx).wrapping_sub(1);
+        let cy = (y + dy).wrapping_sub(1);
+
+        // make sure the difference is 1; abandons negative indeces
+        if (x.abs_diff(cx) <= 1 && y.abs_diff(cy) <= 1)
+                // make sure it is within the max range as well
+                && (cx < grid[0].len() && cy < grid.len())
+        {
+            let other_pipe = grid[cy][cx].to_string().parse::<Pipe>().unwrap();
+            let element = LoopElement {
+                pipe: other_pipe,
+                x: cx,
+                y: cy,
+            };
+            surrounding_elems[indx] = Some(element);
+        }
+    }
+    // println!("{:?}", surrounding_elems);
+    surrounding_elems
+}
+
+fn get_valid_elems(curr_elem: &LoopElement, grid: &Vec<Vec<char>>) -> Vec<LoopElement> {
+    let mut valid_elems: Vec<LoopElement> = vec![];
+
+    let LoopElement { x, y, pipe } = curr_elem;
+    println!("{:?}", curr_elem);
+    let surrounding_elems = get_around_elements(*x, *y, grid);
+    // let needs_dir = [Direction::W, Direction::E, Direction::N, Direction::S];
+
+    let [left_dir, right_dir] = pipe.get_connections();
+
+    // for (elem_opt, needed_direction) in std::iter::zip(surrounding_elems, needs_dir) {
+    for elem_opt in surrounding_elems {
+        if let Some(elem) = elem_opt {
+            let elem_connections = elem.pipe.get_connections();
+            // println!("With Current Pipe {:?} at ({:?}, {:?}) with connections {:?}, comparing to {:?} at ({:?}, {:?}) with connections {:?}. Needs {:?}.", pipe, x, y,pipe_connections, elem, elem.x, elem.y, elem_connections, needed_direction);
+            if elem_connections[0] == left_dir || elem_connections[1] == right_dir {
+                valid_elems.push(elem);
+            }
+        }
+    }
+    println!("{:?}", valid_elems.len());
+    valid_elems
+}
+
 fn main() {
-    println!("{}", part_one("./aoc-inputs/2023/day10sample.txt"));
+    // println!("{}", part_one("./aoc-inputs/2023/day10sample.txt"));
     // println!("{}", part_one("./aoc-inputs/2023/day10sample2.txt"));
-    // println!("{}", part_one("./aoc-inputs/day10simplesample.txt"));
-    // println!("{}", part_one("./aoc-inputs/day10simplesample2.txt"));
+   //  println!("{}", part_one("./aoc-inputs/day10simplesample2.txt"));
+    println!("{}", part_one("./aoc-inputs/day10simplesample.txt"));
 }
 
 fn part_one(file_path: &str) -> usize {
@@ -112,7 +174,6 @@ fn part_one(file_path: &str) -> usize {
 
     let mut start = LoopElement {
         pipe: Pipe::Start,
-        prev_connection: None,
         x: 0,
         y: 0,
     };
@@ -120,7 +181,20 @@ fn part_one(file_path: &str) -> usize {
     'outer: for (y, line) in characters.iter().enumerate() {
         for (x, char) in line.iter().enumerate() {
             if char == &'S' {
-                start = LoopElement { x, y, ..start };
+                let pipe_type = Pipe::get_type_of_s(
+                    &LoopElement {
+                        x,
+                        y,
+                        pipe: Pipe::Start,
+                    },
+                    &characters,
+                );
+                start = LoopElement {
+                    x,
+                    y,
+                    pipe: pipe_type,
+                    ..start
+                };
                 break 'outer;
             }
         }
@@ -133,37 +207,53 @@ fn part_one(file_path: &str) -> usize {
     checker_queue.push_back(start);
 
     while checker_queue.len() > 0 {
-        let LoopElement {
-            prev_connection,
-            pipe,
-            x,
-            y,
-        } = checker_queue.pop_front().unwrap();
-
-        // where x is col, y is row
-        for (dy, dx) in [(1, 0), (1, 2), (0, 1), (2, 1)] {
-            let cx = (x + dx).wrapping_sub(1);
-            let cy = (y + dy).wrapping_sub(1);
-
-            if (x.abs_diff(cx) <= 1 && y.abs_diff(cy) <= 1)
-                && (cx < characters[0].len() && cy < characters.len())
-            {
-                let other_pipe = characters[cy][cx].to_string().parse::<Pipe>().unwrap();
-                // println!("{:#?}", element);
-                if !(cx == start.x && cy == start.y) {
-                    let contains = pipe.connects(&other_pipe, prev_connection);
-                    println!(
-                        "comparing {:?} at ({}, {}) to {:?} at ({}, {}): {}",
-                        pipe, x, y, other_pipe, cx, cy, contains,
-                    );
-                    // if contains && !found_elements.contains(&element) {
-                    //     checker_queue.push_back(element);
-                    //     found_elements.insert(element);
-                    // }
-                }
+        let current_elem = checker_queue.pop_front().unwrap();
+        let valid_elems = get_valid_elems(&current_elem, &characters);
+        for elem in valid_elems {
+            if !found_elements.contains(&elem) {
+                checker_queue.push_back(elem);
+                found_elements.insert(elem);
             }
         }
     }
+
+    // while checker_queue.len() > 0 {
+    //     let LoopElement { pipe, x, y } = checker_queue.pop_front().unwrap();
+
+    //     // where x is col, y is row
+    //     for (dy, dx) in [(1, 0), (1, 2), (0, 1), (2, 1)] {
+    //         let cx = (x + dx).wrapping_sub(1);
+    //         let cy = (y + dy).wrapping_sub(1);
+
+    //         if (x.abs_diff(cx) <= 1 && y.abs_diff(cy) <= 1)
+    //             && (cx < characters[0].len() && cy < characters.len())
+    //         {
+    //             let other_pipe = characters[cy][cx].to_string().parse::<Pipe>().unwrap();
+    //             // println!("{:#?}", element);
+    //             if !(cx == start.x && cy == start.y) {
+    //                 let contains = pipe.connects(&other_pipe, dx as isize - 1, dy as isize - 1);
+    //                 println!(
+    //                     "comparing {:?} at ({}, {}) to {:?} at ({}, {}): {:?}",
+    //                     pipe, x, y, other_pipe, cx, cy, contains,
+    //                 );
+    //                 let element = LoopElement {
+    //                     pipe: other_pipe,
+    //                     x: cx,
+    //                     y: cy,
+    //                 };
+    //                 if contains && !found_elements.contains(&element) {
+    //                     checker_queue.push_back(element);
+    //                     found_elements.insert(element);
+    //                 }
+    //             }
+    //             // if contains && !found_elements.contains(&element) {
+    //             //     checker_queue.push_back(element);
+    //             //     found_elements.insert(element);
+    //             // }
+    //         }
+    //     }
+    // }
+    println!("{:#?}", found_elements);
     match found_elements.len() % 2 {
         0 => found_elements.len() / 2,
         1 => (found_elements.len() / 2) + 1,
