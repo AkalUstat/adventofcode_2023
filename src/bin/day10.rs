@@ -1,10 +1,8 @@
 use adventofcode_2023::get_files_lines;
-use std::cmp::Ordering;
 use std::collections::{HashSet, VecDeque};
-use std::fmt::Display;
 use std::str::FromStr;
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Copy, Clone, Hash)]
 enum Direction {
     // I for invalid and T for start
     N,
@@ -30,6 +28,7 @@ enum Pipe {
 #[derive(Debug, Eq, PartialEq, Hash, Copy, Clone)]
 struct LoopElement {
     pipe: Pipe,
+    prev_connection: Option<Direction>,
     x: usize,
     y: usize,
 }
@@ -59,36 +58,49 @@ impl Pipe {
             Pipe::Horizontal => [Direction::E, Direction::W],
             Pipe::NEBend => [Direction::N, Direction::E],
             Pipe::NWBend => [Direction::N, Direction::W],
-            Pipe::SEBend => [Direction::S, Direction::W],
-            Pipe::SWBend => [Direction::S, Direction::E],
+            Pipe::SEBend => [Direction::S, Direction::E],
+            Pipe::SWBend => [Direction::S, Direction::W],
             Pipe::Ground => [Direction::I, Direction::I],
             Pipe::Start => [Direction::All, Direction::All],
         }
     }
 
-    fn connects(&self, other: &Pipe) -> bool {
-        let self_maps = self.get_connections();
-        let other_maps = other.get_connections();
-        if self_maps[0] == Direction::All || self_maps[1] == Direction::All {
-            return true;
+    fn connects(&self, other: &Pipe, prev_connection: Option<&Direction>) -> Option<Direction> {
+        let mut self_maps = self
+            .get_connections()
+            .iter()
+            .collect::<Vec<_>>();
+
+        if let Some(prev_dir) = prev_connection {
+            self_maps
+                .iter_mut()
+                .filter(|&x| x != &prev_dir)
+                .collect::<Vec<_>>();
+        }
+        let other_maps = other
+            .get_connections()
+            .iter()
+            .collect::<Vec<_>>();
+        println!("{:?} to {:?}", self_maps, other_maps);
+
+        if self == &Pipe::Ground || other == &Pipe::Ground {
+            return None;
         }
 
-        if self_maps.iter().any(|x| x == &Direction::I)
-            || other_maps.iter().any(|x| x == &Direction::I)
-        {
-            return false;
+        if self_maps[0] == &Direction::All || self_maps[1] == &Direction::All {
+            return None;
         }
 
-        self_maps[0] == other_maps[0]
-            || self_maps[1] == other_maps[1]
-            || self_maps[0] == other_maps[1]
-            || self_maps[1] == other_maps[0]
+        self_maps.iter().find(|x| other_maps.contains(&x))
+        
     }
 }
 
 fn main() {
-    // println!("{}", part_one("./aoc-inputs/2023/day10sample.txt"));
-    println!("{}", part_one("./testsample.txt"));
+    println!("{}", part_one("./aoc-inputs/2023/day10sample.txt"));
+    // println!("{}", part_one("./aoc-inputs/2023/day10sample2.txt"));
+    // println!("{}", part_one("./aoc-inputs/day10simplesample.txt"));
+    // println!("{}", part_one("./aoc-inputs/day10simplesample2.txt"));
 }
 
 fn part_one(file_path: &str) -> usize {
@@ -100,6 +112,7 @@ fn part_one(file_path: &str) -> usize {
 
     let mut start = LoopElement {
         pipe: Pipe::Start,
+        prev_connection: None,
         x: 0,
         y: 0,
     };
@@ -120,47 +133,42 @@ fn part_one(file_path: &str) -> usize {
     checker_queue.push_back(start);
 
     while checker_queue.len() > 0 {
-        let LoopElement { pipe, x, y } = checker_queue.pop_front().unwrap();
+        let LoopElement {
+            prev_connection,
+            pipe,
+            x,
+            y,
+        } = checker_queue.pop_front().unwrap();
 
-        for dy in [0, 1, 2] {
-            for dx in [0, 1, 2] {
-                let cx: isize = (x + dx) as isize - 1;
-                let cy: isize = (y + dy) as isize - 1;
-                if !(cx == x as isize && cy == y as isize)
-                    && (cx >= 0 && cy >= 0)
-                    && ((cx as usize) < characters.len() && (cy as usize) < characters.len())
-                {
-                    let other_pipe = characters[cy as usize][cx as usize]
-                        .to_string()
-                        .parse::<Pipe>()
-                        .unwrap();
-                    let element = LoopElement {
-                        pipe: other_pipe,
-                        x: cx as usize,
-                        y: cy as usize,
-                    };
-                    if !((cx as usize) == start.x && (cy as usize) == start.y) {
-                        let contains = pipe.connects(&other_pipe);
-                        println!(
-                            "comparing {:?} at ({}, {}) to {:?} at ({}, {}): {}",
-                            pipe,
-                            x,
-                            y,
-                            other_pipe,
-                            cx,
-                            cy,
-                            contains,
-                        );
-                        if contains && !found_elements.contains(&element) {
-                            checker_queue.push_back(element);
-                            found_elements.insert(element);
-                        }
-                    }
+        // where x is col, y is row
+        for (dy, dx) in [(1, 0), (1, 2), (0, 1), (2, 1)] {
+            let cx = (x + dx).wrapping_sub(1);
+            let cy = (y + dy).wrapping_sub(1);
+
+            if (x.abs_diff(cx) <= 1 && y.abs_diff(cy) <= 1)
+                && (cx < characters[0].len() && cy < characters.len())
+            {
+                let other_pipe = characters[cy][cx].to_string().parse::<Pipe>().unwrap();
+                // println!("{:#?}", element);
+                if !(cx == start.x && cy == start.y) {
+                    let contains = pipe.connects(&other_pipe, prev_connection);
+                    println!(
+                        "comparing {:?} at ({}, {}) to {:?} at ({}, {}): {}",
+                        pipe, x, y, other_pipe, cx, cy, contains,
+                    );
+                    // if contains && !found_elements.contains(&element) {
+                    //     checker_queue.push_back(element);
+                    //     found_elements.insert(element);
+                    // }
                 }
             }
         }
     }
-    found_elements.len() / 2
+    match found_elements.len() % 2 {
+        0 => found_elements.len() / 2,
+        1 => (found_elements.len() / 2) + 1,
+        _ => 0,
+    }
 }
 
 fn find_loop() {}
