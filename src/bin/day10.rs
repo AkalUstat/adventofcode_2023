@@ -41,8 +41,8 @@ impl FromStr for Pipe {
             "-" => Ok(Pipe::Horizontal),
             "L" => Ok(Pipe::NEBend),
             "J" => Ok(Pipe::NWBend),
-            "7" => Ok(Pipe::SEBend),
-            "F" => Ok(Pipe::SWBend),
+            "7" => Ok(Pipe::SWBend),
+            "F" => Ok(Pipe::SEBend),
             "S" => Ok(Pipe::Start),
             "." => Ok(Pipe::Ground),
             _ => Err(()),
@@ -53,7 +53,10 @@ impl Pipe {
     pub fn get_type_of_s(pipe: &LoopElement, grid: &Vec<Vec<char>>) -> Pipe {
         let LoopElement { x, y, .. } = pipe;
         let [west, east, north, south] = get_around_elements(*x, *y, grid);
-        // println!("North: {:#?}, South: {:#?}, West: {:#?}, East: {:#?}", north_elem, south_elem, west_elem, east_elem);
+        println!(
+            "North: {:#?}, South: {:#?}, West: {:#?}, East: {:#?}",
+            north, south, west, east
+        );
         let mut pipe_type = HashSet::from([
             Pipe::Vertical,
             Pipe::Horizontal,
@@ -64,38 +67,54 @@ impl Pipe {
         ]);
 
         if let Some(west_elem) = west {
-            if !west_elem.pipe.get_connections().contains(&Direction::W) {
+            if !west_elem.pipe.get_self_connections().contains(&Direction::E) {
                 pipe_type.remove(&Pipe::Horizontal);
                 pipe_type.remove(&Pipe::NWBend);
                 pipe_type.remove(&Pipe::SWBend);
             }
+        } else {
+            pipe_type.remove(&Pipe::Horizontal);
+            pipe_type.remove(&Pipe::NWBend);
+            pipe_type.remove(&Pipe::SWBend);
         }
         if let Some(east_elem) = east {
-            if !east_elem.pipe.get_connections().contains(&Direction::E) {
+            if !east_elem.pipe.get_self_connections().contains(&Direction::W) {
                 pipe_type.remove(&Pipe::Horizontal);
                 pipe_type.remove(&Pipe::NEBend);
                 pipe_type.remove(&Pipe::SEBend);
             }
+        } else {
+            pipe_type.remove(&Pipe::Horizontal);
+            pipe_type.remove(&Pipe::NEBend);
+            pipe_type.remove(&Pipe::SEBend);
         }
         if let Some(north_elem) = north {
-            if !north_elem.pipe.get_connections().contains(&Direction::N) {
+            if !north_elem.pipe.get_self_connections().contains(&Direction::S) {
                 pipe_type.remove(&Pipe::Vertical);
                 pipe_type.remove(&Pipe::NEBend);
                 pipe_type.remove(&Pipe::NWBend);
             }
+        } else {
+            pipe_type.remove(&Pipe::Vertical);
+            pipe_type.remove(&Pipe::NEBend);
+            pipe_type.remove(&Pipe::NWBend);
         }
         if let Some(south_elem) = south {
-            if !south_elem.pipe.get_connections().contains(&Direction::S) {
+            if !south_elem.pipe.get_self_connections().contains(&Direction::N) {
                 pipe_type.remove(&Pipe::Vertical);
                 pipe_type.remove(&Pipe::SWBend);
                 pipe_type.remove(&Pipe::SEBend);
             }
+        } else {
+            pipe_type.remove(&Pipe::Vertical);
+            pipe_type.remove(&Pipe::SWBend);
+            pipe_type.remove(&Pipe::SEBend);
         }
         println!("{:?}", pipe_type);
 
         *pipe_type.iter().next().unwrap()
     }
-    fn get_connections(&self) -> [Direction; 2] {
+    fn get_self_connections(&self) -> [Direction; 2] {
         match self {
             Pipe::Vertical => [Direction::N, Direction::S],
             Pipe::Horizontal => [Direction::E, Direction::W],
@@ -103,6 +122,17 @@ impl Pipe {
             Pipe::NWBend => [Direction::N, Direction::W],
             Pipe::SEBend => [Direction::S, Direction::E],
             Pipe::SWBend => [Direction::S, Direction::W],
+            Pipe::Ground | Pipe::Start => [Direction::I, Direction::I],
+        }
+    }
+    fn get_needed_connections(&self) -> [Direction; 2] {
+        match self {
+            Pipe::Vertical => [Direction::N, Direction::S],
+            Pipe::Horizontal => [Direction::E, Direction::W],
+            Pipe::NEBend => [Direction::S, Direction::W],
+            Pipe::NWBend => [Direction::S, Direction::E],
+            Pipe::SEBend => [Direction::N, Direction::W],
+            Pipe::SWBend => [Direction::N, Direction::E],
             Pipe::Ground | Pipe::Start => [Direction::I, Direction::I],
         }
     }
@@ -118,8 +148,8 @@ fn get_around_elements(x: usize, y: usize, grid: &Vec<Vec<char>>) -> [Option<Loo
 
         // make sure the difference is 1; abandons negative indeces
         if (x.abs_diff(cx) <= 1 && y.abs_diff(cy) <= 1)
-                // make sure it is within the max range as well
-                && (cx < grid[0].len() && cy < grid.len())
+            // make sure it is within the max range as well
+            && (cx < grid[0].len() && cy < grid.len())
         {
             let other_pipe = grid[cy][cx].to_string().parse::<Pipe>().unwrap();
             let element = LoopElement {
@@ -134,35 +164,64 @@ fn get_around_elements(x: usize, y: usize, grid: &Vec<Vec<char>>) -> [Option<Loo
     surrounding_elems
 }
 
-fn get_valid_elems(curr_elem: &LoopElement, grid: &Vec<Vec<char>>) -> Vec<LoopElement> {
+fn get_valid_elems(
+    curr_elem: &LoopElement,
+    set: &HashSet<LoopElement>,
+    grid: &Vec<Vec<char>>,
+) -> Vec<LoopElement> {
     let mut valid_elems: Vec<LoopElement> = vec![];
 
     let LoopElement { x, y, pipe } = curr_elem;
     println!("{:?}", curr_elem);
     let surrounding_elems = get_around_elements(*x, *y, grid);
-    // let needs_dir = [Direction::W, Direction::E, Direction::N, Direction::S];
 
-    let [left_dir, right_dir] = pipe.get_connections();
+    let mut prev_connected_elem = LoopElement {
+        pipe: Pipe::Ground,
+        x: 0,
+        y: 0,
+    };
 
-    // for (elem_opt, needed_direction) in std::iter::zip(surrounding_elems, needs_dir) {
     for elem_opt in surrounding_elems {
         if let Some(elem) = elem_opt {
-            let elem_connections = elem.pipe.get_connections();
-            // println!("With Current Pipe {:?} at ({:?}, {:?}) with connections {:?}, comparing to {:?} at ({:?}, {:?}) with connections {:?}. Needs {:?}.", pipe, x, y,pipe_connections, elem, elem.x, elem.y, elem_connections, needed_direction);
-            if elem_connections[0] == left_dir || elem_connections[1] == right_dir {
-                valid_elems.push(elem);
+            if set.contains(&elem) {
+                println!("Here! {:?}", elem);
+                prev_connected_elem = elem;
             }
         }
     }
-    println!("{:?}", valid_elems.len());
+
+    let needs_dir = [Direction::E, Direction::W, Direction::S, Direction::N];
+
+    let connection_pts = pipe
+        .get_needed_connections()
+        .into_iter()
+        .filter(|&x| !prev_connected_elem.pipe.get_self_connections().contains(&x))
+        .collect::<Vec<_>>();
+    println!("{:?} -> {:?}", prev_connected_elem, connection_pts);
+
+    for (elem_opt, needed_direction) in std::iter::zip(surrounding_elems, needs_dir) {
+        // for elem_opt in surrounding_elems {
+        if let Some(elem) = elem_opt {
+            if !(elem.pipe == Pipe::Start) {
+                let elem_connections = elem.pipe.get_self_connections();
+                // println!("With Current Pipe {:?} at ({:?}, {:?}) with connections {:?}, comparing to {:?} at ({:?}, {:?}) with connections {:?}. Needs {:?}.", pipe, x, y,pipe_connections, elem, elem.x, elem.y, elem_connections, needed_direction);
+                if elem_connections.contains(&needed_direction)
+                    && connection_pts.iter().any(|x| elem_connections.contains(&x))
+                {
+                    valid_elems.push(elem);
+                }
+            }
+        }
+    }
+    println!("{:?}: {:?}", valid_elems.len(), valid_elems);
     valid_elems
 }
 
 fn main() {
-    // println!("{}", part_one("./aoc-inputs/2023/day10sample.txt"));
-    // println!("{}", part_one("./aoc-inputs/2023/day10sample2.txt"));
-   //  println!("{}", part_one("./aoc-inputs/day10simplesample2.txt"));
-    println!("{}", part_one("./aoc-inputs/day10simplesample.txt"));
+    println!("{}", part_one("./aoc-inputs/2023/day10sample.txt"));
+    println!("{}", part_one("./aoc-inputs/2023/day10sample2.txt"));
+    // println!("{}", part_one("./aoc-inputs/day10simplesample2.txt"));
+    // println!("{}", part_one("./aoc-inputs/day10simplesample.txt"));
 }
 
 fn part_one(file_path: &str) -> usize {
@@ -206,9 +265,13 @@ fn part_one(file_path: &str) -> usize {
     let mut checker_queue: VecDeque<LoopElement> = VecDeque::new();
     checker_queue.push_back(start);
 
+    let mut prev_elem = LoopElement {
+        pipe: Pipe::Start,
+        ..start
+    };
     while checker_queue.len() > 0 {
         let current_elem = checker_queue.pop_front().unwrap();
-        let valid_elems = get_valid_elems(&current_elem, &characters);
+        let valid_elems = get_valid_elems(&current_elem, &found_elements, &characters);
         for elem in valid_elems {
             if !found_elements.contains(&elem) {
                 checker_queue.push_back(elem);
